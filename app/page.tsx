@@ -165,7 +165,31 @@ export default function Home() {
           Fresh • Fast • Affordable
         </p>
       </section>
+		{/* Owner Section */}
+<section className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 mt-10 flex flex-col md:flex-row items-center gap-8">
 
+ <img
+  src="/owner.jpg"
+  alt="Owner"
+  className="w-64 h-64 object-cover rounded-full border-4 border-orange-500"
+/>
+
+  <div>
+    <h2 className="text-4xl font-bold text-orange-500">
+      Welcome to KusumSarovar
+    </h2>
+
+    <p className="mt-4 text-lg text-gray-700 leading-8">
+      Serving delicious food with love, tradition,
+      and authentic taste.
+    </p>
+
+    <p className="mt-4 text-gray-500">
+      Family owned • Fresh ingredients • Fast delivery
+    </p>
+  </div>
+
+</section>
       {/* Search */}
       <div className="max-w-6xl mx-auto px-4 mt-8">
         <input
