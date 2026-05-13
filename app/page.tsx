@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
 
 const foodItems = [
   {
@@ -30,43 +31,158 @@ export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
+  const [customerName, setCustomerName] =
+    useState("");
+
+  const [phone, setPhone] = useState("");
+
+  const [address, setAddress] = useState("");
+
   const addToCart = (item: any) => {
-    setCart([...cart, item]);
+    const existing = cart.find(
+      (cartItem) => cartItem.id === item.id
+    );
+
+    if (existing) {
+      setCart(
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? {
+                ...cartItem,
+                quantity: cartItem.quantity + 1,
+              }
+            : cartItem
+        )
+      );
+    } else {
+      setCart([
+        ...cart,
+        {
+          ...item,
+          quantity: 1,
+        },
+      ]);
+    }
   };
 
-  const removeFromCart = (index: number) => {
-    const updated = [...cart];
-    updated.splice(index, 1);
-    setCart(updated);
+  const increaseQuantity = (id: number) => {
+    setCart(
+      cart.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: item.quantity + 1,
+            }
+          : item
+      )
+    );
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const decreaseQuantity = (id: number) => {
+    setCart(
+      cart
+        .map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                quantity: item.quantity - 1,
+              }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const placeOrder = async () => {
+    if (
+      !customerName ||
+      !phone ||
+      !address ||
+      cart.length === 0
+    ) {
+      alert("Please fill all details");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("orders")
+      .insert([
+        {
+          customer_name: customerName,
+          phone,
+          address,
+          items: cart,
+          total,
+          status: "Pending",
+        },
+      ]);
+
+    if (error) {
+      console.log(error);
+      alert("Order failed");
+    } else {
+      alert("Order placed successfully!");
+
+      setCart([]);
+      setCustomerName("");
+      setPhone("");
+      setAddress("");
+    }
+  };
 
   const filteredItems = foodItems.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
+    item.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-5xl font-bold text-center mb-8 text-orange-600">
-        KusumSarovar
-      </h1>
+    <main className="min-h-screen bg-gray-100">
 
-      <div className="flex justify-center mb-8">
+      {/* Navbar */}
+      <nav className="bg-black text-white p-5 flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-orange-400">
+          KusumSarovar
+        </h1>
+
+        <div>
+          Cart Items: {cart.length}
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="bg-orange-500 text-white py-16 text-center">
+        <h2 className="text-5xl font-bold">
+          Delicious Food Delivered Fast
+        </h2>
+
+        <p className="mt-4 text-xl">
+          Fresh • Fast • Affordable
+        </p>
+      </section>
+
+      {/* Search */}
+      <div className="max-w-6xl mx-auto px-4 mt-8">
         <input
           type="text"
           placeholder="Search food..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border p-3 rounded-lg w-full max-w-md"
+          className="w-full p-4 rounded-xl border text-lg"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Food Items */}
+      <section className="max-w-6xl mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         {filteredItems.map((item) => (
           <div
             key={item.id}
-            className="bg-white rounded-xl shadow-lg overflow-hidden"
+            className="bg-white rounded-2xl shadow-lg overflow-hidden"
           >
             <img
               src={item.image}
@@ -75,63 +191,122 @@ export default function Home() {
             />
 
             <div className="p-4">
-              <h2 className="text-2xl font-semibold">
+              <h3 className="text-2xl font-bold">
                 {item.name}
-              </h2>
+              </h3>
 
-              <p className="text-lg text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2">
                 ₹{item.price}
               </p>
 
               <button
                 onClick={() => addToCart(item)}
-                className="mt-4 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+                className="mt-4 bg-black text-white px-4 py-2 rounded-lg w-full"
               >
                 Add to Cart
               </button>
             </div>
           </div>
         ))}
-      </div>
+      </section>
 
-      <div className="mt-10 bg-white p-6 rounded-xl shadow-lg">
-        <h2 className="text-3xl font-bold mb-4">
-          Cart
+      {/* Cart */}
+      <section className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 mt-10 mb-10">
+        <h2 className="text-3xl font-bold mb-6">
+          Your Cart
         </h2>
 
         {cart.length === 0 ? (
           <p>No items added.</p>
         ) : (
           <>
-            {cart.map((item, index) => (
+            {cart.map((item) => (
               <div
-                key={index}
-                className="flex justify-between items-center border-b py-3"
+                key={item.id}
+                className="flex justify-between items-center border-b py-4"
               >
                 <div>
-                  <p className="font-semibold">{item.name}</p>
-                  <p>₹{item.price}</p>
+                  <h3 className="font-semibold text-lg">
+                    {item.name}
+                  </h3>
+
+                  <p>
+                    ₹{item.price} × {item.quantity}
+                  </p>
                 </div>
 
-                <button
-                  onClick={() => removeFromCart(index)}
-                  className="bg-red-500 text-white px-3 py-1 rounded-lg"
-                >
-                  Remove
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() =>
+                      decreaseQuantity(item.id)
+                    }
+                    className="bg-red-500 text-white px-3 py-1 rounded-lg"
+                  >
+                    -
+                  </button>
+
+                  <span className="text-xl font-bold">
+                    {item.quantity}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      increaseQuantity(item.id)
+                    }
+                    className="bg-green-600 text-white px-3 py-1 rounded-lg"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             ))}
 
-            <h3 className="text-2xl font-bold mt-4">
+            <h3 className="text-3xl font-bold mt-6">
               Total: ₹{total}
             </h3>
 
-            <button className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
-              Checkout
-            </button>
+            {/* Customer Form */}
+            <div className="mt-8 flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={customerName}
+                onChange={(e) =>
+                  setCustomerName(e.target.value)
+                }
+                className="border p-4 rounded-lg"
+              />
+
+              <input
+                type="text"
+                placeholder="Phone Number"
+                value={phone}
+                onChange={(e) =>
+                  setPhone(e.target.value)
+                }
+                className="border p-4 rounded-lg"
+              />
+
+              <textarea
+                placeholder="Delivery Address"
+                value={address}
+                onChange={(e) =>
+                  setAddress(e.target.value)
+                }
+                className="border p-4 rounded-lg"
+              />
+
+              <button
+                onClick={placeOrder}
+                className="bg-green-600 text-white py-4 rounded-xl text-xl font-bold"
+              >
+                Place Order
+              </button>
+            </div>
           </>
         )}
-      </div>
+      </section>
+
     </main>
   );
 }
