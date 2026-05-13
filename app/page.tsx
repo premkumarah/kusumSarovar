@@ -11,11 +11,11 @@ const foodItems = [
       "https://images.unsplash.com/photo-1568901346375-23c9450c58cd",
   },
   {
-  id: 2,
-  name: "Pizza",
-  price: 250,
-  image:
-    "https://images.unsplash.com/photo-1513104890138-7c749659a591",
+    id: 2,
+    name: "Pizza",
+    price: 250,
+    image:
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591",
   },
   {
     id: 3,
@@ -28,21 +28,42 @@ const foodItems = [
 
 export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
   const addToCart = (item: any) => {
     setCart([...cart, item]);
   };
 
+  const removeFromCart = (index: number) => {
+    const updated = [...cart];
+    updated.splice(index, 1);
+    setCart(updated);
+  };
+
   const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+  const filteredItems = foodItems.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-4xl font-bold text-center mb-8">
-        Food Order App
+      <h1 className="text-5xl font-bold text-center mb-8 text-orange-600">
+        KusumSarovar
       </h1>
 
+      <div className="flex justify-center mb-8">
+        <input
+          type="text"
+          placeholder="Search food..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-3 rounded-lg w-full max-w-md"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {foodItems.map((item) => (
+        {filteredItems.map((item) => (
           <div
             key={item.id}
             className="bg-white rounded-xl shadow-lg overflow-hidden"
@@ -50,7 +71,7 @@ export default function Home() {
             <img
               src={item.image}
               alt={item.name}
-              className="h-48 w-full object-cover"
+              className="h-56 w-full object-cover"
             />
 
             <div className="p-4">
@@ -85,10 +106,19 @@ export default function Home() {
             {cart.map((item, index) => (
               <div
                 key={index}
-                className="flex justify-between border-b py-2"
+                className="flex justify-between items-center border-b py-3"
               >
-                <span>{item.name}</span>
-                <span>₹{item.price}</span>
+                <div>
+                  <p className="font-semibold">{item.name}</p>
+                  <p>₹{item.price}</p>
+                </div>
+
+                <button
+                  onClick={() => removeFromCart(index)}
+                  className="bg-red-500 text-white px-3 py-1 rounded-lg"
+                >
+                  Remove
+                </button>
               </div>
             ))}
 
