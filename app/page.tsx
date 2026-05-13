@@ -169,7 +169,7 @@ export default function Home() {
 <section className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 mt-10 flex flex-col md:flex-row items-center gap-8">
 
  <img
-  src="/owner.jpg"
+  src="/owner.jpg.jpg"
   alt="Owner"
   className="w-64 h-64 object-cover rounded-full border-4 border-orange-500"
 />
